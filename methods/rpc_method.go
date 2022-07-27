@@ -31,7 +31,7 @@ func RpcMethod(apiDomain string) error {
 		if err != nil {
 			eachError = err.Error()
 		}
-		if resp.StatusCode >= 300 {
+		if resp != nil && resp.StatusCode >= 300 {
 			eachError = resp.Status
 		}
 		if len(eachError) > 0 {
