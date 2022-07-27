@@ -43,7 +43,9 @@ func RpcMethod(apiDomain string) error {
 		if len(eachError) > 0 {
 			allErrors += fmt.Sprintf("%s - %s\n", api, eachError)
 		}
-		resp.Body.Close()
+		if resp != nil {
+			resp.Body.Close()
+		}
 	}
 
 	if len(allErrors) > 0 {
