@@ -1,4 +1,4 @@
-package vercel_functions
+package api
 
 import (
 	"net/http"
@@ -6,8 +6,8 @@ import (
 	"github.com/hugh-onf/serverless-functions/methods"
 )
 
-func Handler(w http.ResponseWriter, r *http.Request) {
-	if err := methods.RpcMethod(); err != nil {
+func ApiServiceDev(w http.ResponseWriter, r *http.Request) {
+	if err := methods.RpcMethod("api.onfinality.me"); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 	} else {

@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"encoding/json"
 	"os"
 	"strings"
 )
@@ -17,10 +16,5 @@ func getNetworks() []string {
 	if len(envValue) == 0 {
 		return defaultNetwork
 	}
-	var networks *[]string
-	err := json.Unmarshal([]byte(envValue), networks)
-	if err != nil {
-		return defaultNetwork
-	}
-	return *networks
+	return strings.Split(envValue, ",")
 }
