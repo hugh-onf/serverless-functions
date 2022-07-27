@@ -1,17 +1,19 @@
 package utils
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
-func BuildHttpRpcUrl(apiDomain string) []string {
+func BuildHttpRpcUrl(apiDomain string) ([]string, error) {
 	apiKey := getApiKey()
 	if len(apiKey) == 0 {
-		fmt.Println("no api key set, skip this run")
-		return nil
+		return nil, errors.New("no api key set, skip this run")
 	}
 	var urls []string
 	networks := getNetworks()
 	for _, n := range networks {
 		urls = append(urls, fmt.Sprintf("https://%s.%s/rpc?apiKey=%s", n, apiDomain, apiKey))
 	}
-	return urls
+	return urls, nil
 }

@@ -3,21 +3,17 @@ package methods
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/hugh-onf/serverless-functions/utils"
 )
 
-func RpcMethod() {
-	defer func() {
-		fmt.Println("start running `rpc_methods` call...DONE")
-	}()
-	fmt.Println("start running `rpc_methods` call...")
-	apis := utils.BuildHttpRpcUrl("api.onfinality.me")
-	if apis == nil {
-		fmt.Println("no endpoints to call")
-		return
+func RpcMethod() error {
+	apis, err := utils.BuildHttpRpcUrl("api.onfinality.me")
+	if err != nil {
+		return err
 	}
 	postBody, _ := json.Marshal(map[string]interface{}{
 		"id":      1,
@@ -25,11 +21,16 @@ func RpcMethod() {
 		"method":  "rpc_methods",
 	})
 	responseBody := bytes.NewBuffer(postBody)
+	allErrors := ""
 	for _, api := range apis {
 		resp, err := http.Post(api, "application/json", responseBody)
 		if err != nil {
-			fmt.Printf("ERR: %s", err.Error())
+			allErrors += fmt.Sprintf("\n%s", err.Error())
 		}
 		resp.Body.Close()
 	}
+	if len(allErrors) > 0 {
+		return errors.New(allErrors)
+	}
+	return nil
 }

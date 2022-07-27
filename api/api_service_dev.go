@@ -7,5 +7,11 @@ import (
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	methods.RpcMethod()
+	if err := methods.RpcMethod(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	} else {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	}
 }
