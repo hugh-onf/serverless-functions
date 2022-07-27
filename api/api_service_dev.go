@@ -1,11 +1,11 @@
 package vercel_functions
 
 import (
-	"fmt"
 	"net/http"
-	"os"
+
+	"github.com/hugh-onf/serverless-functions/methods"
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, os.Getenv("API_KEY"))
+	methods.RpcMethod()
 }
