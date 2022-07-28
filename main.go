@@ -22,7 +22,11 @@ func main() {
 		}
 
 		if args[0] == "burst" {
-			utils.BurstHttpRpc()
+			if total, err := utils.BurstHttpRpc(); err == nil {
+				fmt.Printf("API Service burst calls done, requests sent: %d", total)
+			} else {
+				panic(err)
+			}
 		}
 	} else {
 		fmt.Println("Missing args: server | burst")

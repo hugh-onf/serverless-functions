@@ -54,7 +54,7 @@ func callHttpRpc(url string, rpc *JsonRpc) ([]byte, int, error) {
 	return nil, http.StatusNoContent, nil
 }
 
-func BurstHttpRpc() error {
+func BurstHttpRpc() (int, error) {
 	methods := strings.Split(strings.TrimSpace(os.Getenv("METHODS")), ",")
 	var rpcs []*JsonRpc
 	for _, method := range methods {
@@ -71,8 +71,9 @@ func BurstHttpRpc() error {
 	}
 	urls, err := buildHttpRpcUrl(os.Getenv("API_DOMAIN"))
 	if err != nil {
-		return err
+		return 0, err
 	}
+	totalRequests := 0
 	for _, url := range urls {
 		for _, rpc := range rpcs {
 			// Random call burst for more realistic data
@@ -83,8 +84,9 @@ func BurstHttpRpc() error {
 				go func() {
 					callHttpRpc(url, rpc)
 				}()
+				totalRequests++
 			}
 		}
 	}
-	return nil
+	return totalRequests, nil
 }

@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mx-test-tool-configmap
+  namespace: onfinality-apps
+data:
+  API_DOMAIN: "api.onfinality.me"
+  API_KEYS: "f1623a99-c8ad-4cd8-925f-1872fe000ea2"
+  NETWORKS: "acala-dev,polkadot-dev,bifrost-dev,calamari-dev,nodle-dev,heiko-dev,parallel-dev,karura-dev"
+  METHODS: "rpc_methods,system_health,system_name"
+  BURST: "2000"
+---  
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: mx-api-service-burst
+  namespace: onfinality-apps
+spec:
+  schedule: "*/30 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: onf-test-cli-burst
+            image: hughonfinality/onf-test-cli
+            imagePullPolicy: Always
+            command:
+            - onf-test-cli 
+            - burst
+            env:
+            - name: API_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: mx-test-tool-configmap
+                  key: API_DOMAIN
+            - name: API_KEYS
+              valueFrom:
+                configMapKeyRef:
+                  name: mx-test-tool-configmap
+                  key: API_KEYS
+            - name: NETWORKS
+              valueFrom:
+                configMapKeyRef:
+                  name: mx-test-tool-configmap
+                  key: NETWORKS
+            - name: METHODS
+              valueFrom:
+                configMapKeyRef:
+                  name: mx-test-tool-configmap
+                  key: METHODS
+            - name: BURST
+              valueFrom:
+                configMapKeyRef:
+                  name: mx-test-tool-configmap
+                  key: BURST
+          restartPolicy: OnFailure
