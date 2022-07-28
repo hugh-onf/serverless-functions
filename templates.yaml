@@ -16,7 +16,7 @@ metadata:
   name: mx-api-service-burst
   namespace: onfinality-apps
 spec:
-  schedule: "*/30 * * * *"
+  schedule: "* * * * *"
   jobTemplate:
     spec:
       template:
@@ -24,7 +24,7 @@ spec:
           containers:
           - name: onf-test-cli-burst
             image: hughonfinality/onf-test-cli
-            imagePullPolicy: Always
+            imagePullPolicy: IfNotPresent
             command:
             - onf-test-cli 
             - burst
