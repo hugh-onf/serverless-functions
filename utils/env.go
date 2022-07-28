@@ -7,8 +7,8 @@ import (
 
 var defaultNetwork = []string{"acala-dev"}
 
-func getApiKey() string {
-	return os.Getenv("API_KEY")
+func getApiKeys() []string {
+	return strings.Split(strings.TrimSpace(os.Getenv("API_KEYS")), ",")
 }
 
 func getNetworks() []string {
