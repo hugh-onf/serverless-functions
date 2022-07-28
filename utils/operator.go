@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -53,7 +54,12 @@ func callHttpRpc(url string, rpc *JsonRpc) ([]byte, int, error) {
 	return nil, http.StatusNoContent, nil
 }
 
-func BurstHttpRpc(apiDomain string, methods []*JsonRpc) error {
+func BurstHttpRpc() error {
+	methods := strings.Split(strings.TrimSpace(os.Getenv("METHODS")), ",")
+	var rpcs []*JsonRpc
+	for _, method := range methods {
+		rpcs = append(rpcs, NewJsonRpcV2(method, nil))
+	}
 	burstVal := os.Getenv("BURST")
 	burst, err := strconv.ParseUint(burstVal, 0, 16)
 	// Clamp max burst
@@ -63,19 +69,19 @@ func BurstHttpRpc(apiDomain string, methods []*JsonRpc) error {
 	if burst < MIN_BURST {
 		burst = MIN_BURST
 	}
-	urls, err := buildHttpRpcUrl(apiDomain)
+	urls, err := buildHttpRpcUrl(os.Getenv("API_DOMAIN"))
 	if err != nil {
 		return err
 	}
 	for _, url := range urls {
-		for _, method := range methods {
+		for _, rpc := range rpcs {
 			// Random call burst for more realistic data
 			rand.Seed(time.Now().UnixNano())
 			callsCount := rand.Intn(int(burst)-MIN_BURST+1) + MIN_BURST
 			for i := 0; i < callsCount; i++ {
 				// Fire and forget, hope for the best
 				go func() {
-					callHttpRpc(url, method)
+					callHttpRpc(url, rpc)
 				}()
 			}
 		}
