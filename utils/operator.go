@@ -77,6 +77,7 @@ func BurstHttpRpc() (int, error) {
 		return 0, err
 	}
 	totalRequests := 0
+	ch := make(chan byte, 1)
 	for _, url := range urls {
 		for _, rpc := range rpcs {
 			// Random call burst for more realistic data
@@ -85,12 +86,21 @@ func BurstHttpRpc() (int, error) {
 			for i := 0; i < callsCount; i++ {
 				// Fire and forget, hope for the best
 				go func() {
-					body, code, status := callHttpRpc(url, rpc)
-					fmt.Printf("%s > %s > %v > %d - %s: %s\n", url, rpc.Method, rpc.Params, code, status, string(body))
+					fmt.Printf("%s > %s | %v => ", url, rpc.Method, rpc.Params)
+					body, _, err := callHttpRpc(url, rpc)
+					if err != nil {
+						fmt.Printf("%s - %s", err.Error(), string(body))
+					} else {
+						fmt.Print("OK")
+					}
+					fmt.Println()
+					ch <- 1
 				}()
+				<-ch
 				totalRequests++
 			}
 		}
 	}
+
 	return totalRequests, nil
 }
