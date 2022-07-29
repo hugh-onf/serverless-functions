@@ -30,17 +30,20 @@ func buildHttpRpcUrl(apiDomain string) ([]string, error) {
 }
 
 func callHttpRpc(url string, rpc *JsonRpc) ([]byte, int, error) {
-	postBody, _ := json.Marshal(rpc)
+	postBody, err := json.Marshal(rpc)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
 	payload := bytes.NewBuffer(postBody)
 	resp, err := http.Post(url, "application/json", payload)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
 	defer func() {
 		if resp != nil {
 			resp.Body.Close()
 		}
 	}()
-	if err != nil {
-		return nil, http.StatusInternalServerError, err
-	}
 	if resp != nil {
 		b, err := io.ReadAll(resp.Body)
 		if err != nil {
@@ -82,7 +85,8 @@ func BurstHttpRpc() (int, error) {
 			for i := 0; i < callsCount; i++ {
 				// Fire and forget, hope for the best
 				go func() {
-					callHttpRpc(url, rpc)
+					body, code, status := callHttpRpc(url, rpc)
+					fmt.Printf("%s > %s > %v > %d - %s: %s\n", url, rpc.Method, rpc.Params, code, status, string(body))
 				}()
 				totalRequests++
 			}
