@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -63,44 +64,48 @@ func BurstHttpRpc() (int, error) {
 	for _, method := range methods {
 		rpcs = append(rpcs, NewJsonRpcV2(method, nil))
 	}
-	burstVal := os.Getenv("BURST")
-	burst, err := strconv.ParseUint(burstVal, 0, 16)
-	// Clamp max burst
-	if err != nil || burst > MAX_BURST {
-		burst = MAX_BURST
+	maxBurstVal := os.Getenv("BURST_MAX")
+	maxBurst, err := strconv.ParseUint(maxBurstVal, 0, 16)
+	if err != nil || maxBurst > MAX_BURST {
+		maxBurst = MAX_BURST
 	}
-	if burst < MIN_BURST {
-		burst = MIN_BURST
+
+	minBurstVal := os.Getenv("BURST_MIN")
+	minBurst, err := strconv.ParseUint(minBurstVal, 0, 16)
+	if err != nil || minBurst < MIN_BURST {
+		minBurst = MIN_BURST
 	}
+
 	urls, err := buildHttpRpcUrl(os.Getenv("API_DOMAIN"))
 	if err != nil {
 		return 0, err
 	}
-	totalRequests := 0
-	ch := make(chan byte, 1)
+	// Random call burst for more realistic data
+	rand.Seed(time.Now().UnixNano())
+	callsCount := rand.Intn(int(maxBurst)-int(minBurst)+1) + int(minBurst)
+	totalRequests := len(urls) * len(rpcs) * callsCount
+
+	wg := &sync.WaitGroup{}
+	wg.Add(totalRequests)
 	for _, url := range urls {
 		for _, rpc := range rpcs {
-			// Random call burst for more realistic data
-			rand.Seed(time.Now().UnixNano())
-			callsCount := rand.Intn(int(burst)-MIN_BURST+1) + MIN_BURST
 			for i := 0; i < callsCount; i++ {
 				// Fire and forget, hope for the best
 				go func() {
-					fmt.Printf("%s > %s | %v => ", url, rpc.Method, rpc.Params)
+					defer wg.Done()
+					msg := fmt.Sprintf("%s > %s | %v => ", url, rpc.Method, rpc.Params)
 					body, _, err := callHttpRpc(url, rpc)
 					if err != nil {
-						fmt.Printf("%s - %s", err.Error(), string(body))
+						msg += fmt.Sprintf("%s - %s", err.Error(), string(body))
 					} else {
-						fmt.Print("OK")
+						msg += "OK"
 					}
-					fmt.Println()
-					ch <- 1
+					fmt.Println(msg)
 				}()
-				<-ch
-				totalRequests++
 			}
 		}
 	}
+	wg.Wait()
 
 	return totalRequests, nil
 }
