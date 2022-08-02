@@ -8,7 +8,8 @@ data:
   API_KEYS: "f1623a99-c8ad-4cd8-925f-1872fe000ea2"
   NETWORKS: "acala-dev,polkadot-dev,bifrost-dev,calamari-dev,nodle-dev,heiko-dev,parallel-dev,karura-dev"
   METHODS: "rpc_methods,system_health,system_name"
-  BURST: "2000"
+  BURST_MAX: "400"
+  BURST_MIN: "200"
 ---  
 apiVersion: batch/v1beta1
 kind: CronJob
@@ -16,14 +17,14 @@ metadata:
   name: mx-api-service-burst
   namespace: onfinality-apps
 spec:
-  schedule: "* * * * *"
+  schedule: "*/2 * * * *"
   jobTemplate:
     spec:
       template:
         spec:
           containers:
           - name: onf-test-cli-burst
-            image: hughonfinality/onf-test-cli
+            image: hughonfinality/onf-test-cli:rev-dbfa83f
             imagePullPolicy: IfNotPresent
             command:
             - onf-test-cli 
@@ -49,9 +50,19 @@ spec:
                 configMapKeyRef:
                   name: mx-test-tool-configmap
                   key: METHODS
-            - name: BURST
+            - name: BURST_MAX
               valueFrom:
                 configMapKeyRef:
                   name: mx-test-tool-configmap
-                  key: BURST
+                  key: BURST_MAX
+            - name: BURST_MIN
+              valueFrom:
+                configMapKeyRef:
+                  name: mx-test-tool-configmap
+                  key: BURST_MIN
           restartPolicy: OnFailure
+          tolerations:
+          - key: onfinality.io/role
+            operator: Equal
+            value: mx-service
+            effect: NoSchedule
